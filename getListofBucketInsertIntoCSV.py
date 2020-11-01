@@ -1,31 +1,28 @@
 import boto as boto
 import boto3
 import csv
-import os
-s3_client = boto3.client('s3')
+def getBucketNameAndRegion():
+    s3_client = boto3.client('s3')
+    s3_buckets=list()
+    response = s3_client.list_buckets()
+    for bucket in response['Buckets']:
+        temp=dict()
+        bucket_name = (bucket["Name"])
+        location_req=s3_client.get_bucket_location(Bucket=bucket_name)
+        s3_location=location_req.get('LocationConstraint')
+        if s3_location is None:
+            s3_location='us-east-1'
+        print('Bucket Name:',bucket_name,'Region:',s3_location)
+        temp['S3_Name']=bucket_name
+        temp['S3_location']=s3_location
+        s3_buckets.append(temp)
+    return s3_buckets
+def writeIntoCSV(fileName,s3_buckets):
+    with open(fileName,'w',newline='')as file:
+        w=csv.writer(file)
+        w.writerow(['BucketName','Region'])
+        for i in s3_buckets:
+            w.writerow([i.get('S3_Name'),i.get('S3_location')])
 
-
-def get_location(client, bucket_name):
-    response = client.get_bucket_location(Bucket=bucket_name)
-    return response['LocationConstraint']
-
-
-# Specifies the Region where the bucket resides. For a list of all the Amazon S3 supported location constraints
-# by Region, see Regions and Endpoints . Buckets in Region us-east-1 have a LocationConstraint of null
-
-def write_bucketName_Region(s3_client,fileName):
-    with open(fileName,'w',newline='')as f:
-        w = csv.writer(f)  # returns writer object to write data
-        w.writerow(['BucketName', 'Region'])
-        response = s3_client.list_buckets()
-        for bucket in response['Buckets']:
-            BucketName = (bucket["Name"])
-            location = get_location(s3_client, BucketName)
-            if location == None:
-                location = 'us-east-1'
-            w.writerow([BucketName,location])
-            print('Bucket Name:', BucketName, 'Region:', location)
-
-write_bucketName_Region(s3_client,'s3BucketRegion.csv')
-
-
+s3_buckets=getBucketNameAndRegion()
+writeIntoCSV('s3_buckets.csv',s3_buckets)
