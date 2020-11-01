@@ -20,12 +20,10 @@ def write_bucketName_Region(s3_client,fileName):
         response = s3_client.list_buckets()
         for bucket in response['Buckets']:
             BucketName = (bucket["Name"])
-            sBucketName=str(BucketName)
             location = get_location(s3_client, BucketName)
             if location == None:
                 location = 'us-east-1'
-            slocation=str(location)
-            w.writerow([sBucketName,slocation])
+            w.writerow([BucketName,location])
             print('Bucket Name:', BucketName, 'Region:', location)
 
 write_bucketName_Region(s3_client,'s3BucketRegion.csv')
